@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análise de Criativos — INVISTA | Facebook Ads</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0b1220; --bg-2: #111a2f; --card: #16213e; --card-2: #1c2a4a;
+    --border: #243355; --text: #e6ecf5; --text-dim: #95a3bd;
+    --accent: #4f86ff; --accent-2: #6c5ce7; --gold: #f5b400;
+    --win: #00d68f; --warn: #ffaa00; --lose: #ff4d6d; --neutral: #6f7a93;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+    color: var(--text); min-height: 100vh; line-height: 1.5; }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 80px; }
+  header.hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 32px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-logo { width: 48px; height: 48px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 20px; box-shadow: var(--shadow); }
+  .brand h1 { font-size: 22px; margin: 0; letter-spacing: -.3px; }
+  .brand p { margin: 2px 0 0; color: var(--text-dim); font-size: 13px; }
+  .period { background: var(--card); padding: 10px 16px; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; color: var(--text-dim); }
+  .period strong { color: var(--text); font-weight: 600; }
+
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 8px; }
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px; box-shadow: var(--shadow); }
+  .kpi .label { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px; font-weight: 600; }
+  .kpi .value { font-size: 22px; font-weight: 700; margin-top: 8px; letter-spacing: -.5px; }
+  .kpi .sub { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .kpi.highlight { background: linear-gradient(135deg, rgba(0,214,143,.18), rgba(0,214,143,.05)); border-color: rgba(0,214,143,.4); }
+  .kpi.highlight .value { color: var(--win); }
+
+  .highlights { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .hl-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); position: relative; }
+  .hl-card::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 2px; }
+  .hl-card.up::before { background: var(--win); }
+  .hl-card.down::before { background: var(--lose); }
+  .hl-card.fix::before { background: var(--accent); }
+  .hl-card .icon { font-size: 18px; }
+  .hl-card .title { font-weight: 700; font-size: 13px; margin: 4px 0 2px; }
+  .hl-card .desc { font-size: 11.5px; color: var(--text-dim); line-height: 1.4; }
+
+  .mode-banner { margin: 40px 0 18px; padding: 18px 22px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(79,134,255,.18), rgba(108,92,231,.10));
+    border: 1px solid rgba(79,134,255,.35); display: flex; align-items: flex-start; gap: 16px; }
+  .mode-banner.b { background: linear-gradient(135deg, rgba(245,180,0,.18), rgba(255,170,0,.08)); border-color: rgba(245,180,0,.4); }
+  .mode-tag { flex-shrink: 0; padding: 6px 12px; border-radius: 8px; font-weight: 800; font-size: 13px; letter-spacing: .5px; background: var(--accent); color: #fff; }
+  .mode-banner.b .mode-tag { background: var(--gold); color: #1a1100; }
+  .mode-banner .desc { font-size: 13px; color: var(--text); line-height: 1.55; }
+  .mode-banner .desc b { color: var(--text); }
+
+  h2.section { font-size: 16px; margin: 32px 0 16px; letter-spacing: -.2px; display: flex; align-items: center; gap: 10px; }
+  h2.section .sub { font-size: 12px; color: var(--text-dim); font-weight: 400; }
+
+  .ranking { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  thead th { text-align: left; padding: 14px 12px; color: var(--text-dim); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; background: var(--card-2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tbody td { padding: 14px 12px; border-bottom: 1px solid var(--border); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(79,134,255,.06); }
+  .creative-name { font-weight: 600; font-size: 13.5px; }
+  .creative-id { color: var(--text-dim); font-size: 11.5px; }
+  .num-best { color: var(--win); font-weight: 600; }
+  .num-worst { color: var(--lose); font-weight: 600; }
+
+  .battles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .battles.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .battle { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+  .battle-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 8px; flex-wrap: wrap; }
+  .battle-property { font-weight: 700; font-size: 14px; }
+  .battle-property .pid { color: var(--text-dim); font-weight: 400; font-size: 12px; }
+  .battle-tag { font-size: 10.5px; padding: 3px 8px; border-radius: 4px; background: var(--card-2); color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+  .vs-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+  .competitor { background: var(--card-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; position: relative; }
+  .competitor.winner { border-color: rgba(0,214,143,.6); box-shadow: 0 0 0 1px rgba(0,214,143,.3); }
+  .competitor.winner::before { content: "★ MELHOR CPL"; position: absolute; top: -10px; left: 12px; background: var(--win); color: #04221a; font-size: 9.5px; padding: 3px 8px; border-radius: 4px; font-weight: 800; letter-spacing: .5px; }
+  .competitor .name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .competitor .micro-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-top: 8px; }
+  .competitor .micro-stats div { font-size: 11px; color: var(--text-dim); }
+  .competitor .micro-stats div span { color: var(--text); font-weight: 600; display: block; font-size: 13px; }
+  .alloc-bar { margin-top: 10px; height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+  .alloc-bar > span { display: block; height: 100%; background: var(--accent); }
+  .alloc-label { font-size: 10.5px; color: var(--text-dim); margin-top: 4px; }
+  .vs-divider { display: grid; place-items: center; color: var(--text-dim); font-weight: 800; font-size: 14px; padding: 0 4px; }
+  .pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .3px; white-space: nowrap; }
+  .pill.lose { background: rgba(255,77,109,.18); color: var(--lose); }
+
+  .solo-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+  .solo-card h3 { margin: 0 0 10px; font-size: 14px; }
+
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+  .chart-card h3 { margin: 0 0 14px; font-size: 14px; }
+  .chart-card h3 .sub { color: var(--text-dim); font-weight: 400; font-size: 12px; }
+  .chart-wrap { position: relative; height: 320px; }
+
+  footer { text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 40px; }
+
+  @media (max-width: 1080px) {
+    .kpis { grid-template-columns: repeat(3, 1fr); }
+    .highlights { grid-template-columns: repeat(2, 1fr); }
+    .battles, .battles.cols-2 { grid-template-columns: 1fr; }
+    .charts { grid-template-columns: 1fr; }
+  }
+
+  /* Login gate */
+  #gate { position: fixed; inset: 0; background: linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%); display: grid; place-items: center; z-index: 9999; }
+  #gate .box { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 36px 32px; width: 90%; max-width: 380px; box-shadow: var(--shadow); text-align: center; }
+  #gate .logo { width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 14px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%); display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 24px; box-shadow: var(--shadow); }
+  #gate h1 { font-size: 19px; margin: 0 0 6px; letter-spacing: -.3px; }
+  #gate p { color: var(--text-dim); margin: 0 0 22px; font-size: 13px; }
+  #gate input { width: 100%; padding: 13px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; outline: none; transition: border-color .2s; }
+  #gate input:focus { border-color: var(--accent); }
+  #gate button { width: 100%; margin-top: 12px; padding: 13px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none; border-radius: 10px; font-weight: 600; font-size: 14px; cursor: pointer; transition: opacity .2s; }
+  #gate button:hover { opacity: .9; }
+  #gate .err { color: var(--lose); font-size: 12px; margin-top: 10px; min-height: 16px; }
+  #content { display: none; }
+  #content.unlocked { display: block; }
+</style>
+</head>
+<body>
+
+<!-- ====== LOGIN GATE ====== -->
+<div id="gate">
+  <div class="box">
+    <div class="logo">IV</div>
+    <h1>Dashboard INVISTA</h1>
+    <p>Acesso restrito · digite a senha</p>
+    <input type="password" id="pwd" placeholder="Senha" autocomplete="off" />
+    <button onclick="checkPwd()">Entrar</button>
+    <div class="err" id="err"></div>
+  </div>
+</div>
+
+<script>
+// SENHA: invista@2026  — para trocar, gere o hash SHA-256 da nova senha em https://emn178.github.io/online-tools/sha256.html e cole abaixo
+const PASS_HASH = "1953a5d4936631e40c549517e3a19a7eb4c4fd289bccca08efa60b392e32c81c";
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function checkPwd() {
+  const input = document.getElementById('pwd').value;
+  const hash = await sha256(input);
+  if (hash === PASS_HASH) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('content').classList.add('unlocked');
+    try { sessionStorage.setItem('invista_unlocked', '1'); } catch(e) {}
+  } else {
+    document.getElementById('err').textContent = 'Senha incorreta';
+    document.getElementById('pwd').value = '';
+  }
+}
+document.getElementById('pwd').addEventListener('keypress', e => { if (e.key === 'Enter') checkPwd(); });
+try {
+  if (sessionStorage.getItem('invista_unlocked') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('content').classList.add('unlocked');
+  }
+} catch(e) {}
+</script>
+
+<div id="content">
+<div class="wrap">
+
+  <header class="hero">
+    <div class="brand">
+      <div class="brand-logo">IV</div>
+      <div>
+        <h1>Análise de Criativos · INVISTA</h1>
+        <p>Conta nova Invista — Facebook Ads · Análise dual (Conjuntos + Anúncios)</p>
+      </div>
+    </div>
+    <div class="period">Acumulado até <strong>23 mai 2026</strong> · Modo A: 8 dias · Modo B: 16 dias</div>
+  </header>
+
+  <div class="kpis">
+    <div class="kpi"><div class="label">Investimento total</div><div class="value">R$ 1.795,87</div><div class="sub">11 criativos · 6 conjuntos + 5 anúncios</div></div>
+    <div class="kpi highlight"><div class="label">Leads no site</div><div class="value">43</div><div class="sub">↑ 43% vs análise anterior</div></div>
+    <div class="kpi highlight"><div class="label">CPL médio</div><div class="value">R$ 41,76</div><div class="sub">↑ vs R$ 37,15 (período cresceu)</div></div>
+    <div class="kpi"><div class="label">Cliques totais</div><div class="value">5.076</div><div class="sub">CPC médio R$ 0,35</div></div>
+    <div class="kpi"><div class="label">CTR médio</div><div class="value">~10,1%</div><div class="sub">acima de 8,43% (1º período)</div></div>
+    <div class="kpi"><div class="label">Melhor CPL</div><div class="value">R$ 18,50</div><div class="sub">[29787] KAUE</div></div>
+  </div>
+
+  <h2 class="section">Destaques acumulados <span class="sub">· principais movimentos desde a criação dos criativos</span></h2>
+  <div class="highlights">
+    <div class="hl-card up">
+      <div class="icon">🚀</div>
+      <div class="title">KAUE seguiu escalando</div>
+      <div class="desc">9 leads, CPL <b style="color:var(--win)">R$ 18,50</b>, CTR <b style="color:var(--win)">31,98%</b>. O melhor criativo da conta.</div>
+    </div>
+    <div class="hl-card fix">
+      <div class="icon">🤖</div>
+      <div class="title">FERNANDO ultrapassou CECILIA (37906)</div>
+      <div class="desc">5 leads (vs 2 da CECILIA). Algoritmo equilibrou em 47/53 e FERNANDO performa muito mais.</div>
+    </div>
+    <div class="hl-card up">
+      <div class="icon">💫</div>
+      <div class="title">CECILIA 41654 sólida</div>
+      <div class="desc">6 leads, CPL R$ 27,95, CTR 13,23%. Junto com a TATI rendendo 10 leads no imóvel.</div>
+    </div>
+    <div class="hl-card down">
+      <div class="icon">⚠️</div>
+      <div class="title">CECI 29787 segue ruim</div>
+      <div class="desc">CPL <b style="color:var(--lose)">R$ 163,37</b> — gastou R$ 163 por 1 lead. Pior da conta.</div>
+    </div>
+  </div>
+
+  <!-- MODO A -->
+  <div class="mode-banner">
+    <div class="mode-tag">MODO A</div>
+    <div class="desc">
+      <b>Disputa de conjuntos — orçamento controlado por você (criados em 16/mai).</b><br>
+      6 conjuntos nos imóveis <b>29787, 40736 e 41654</b>. Cada criativo tem seu próprio orçamento. Comparação de CPL é justa.
+    </div>
+  </div>
+
+  <h2 class="section">Tabela dos conjuntos <span class="sub">· ordenada por CPL crescente</span></h2>
+  <div class="ranking">
+    <table>
+      <thead>
+        <tr><th>Conjunto</th><th>Investido</th><th>Leads</th><th>CPL</th><th>CTR</th><th>CPC</th><th>Cliques</th><th>Conv.</th><th>CPM</th></tr>
+      </thead>
+      <tbody id="modoA-tbody"></tbody>
+    </table>
+  </div>
+
+  <h2 class="section">Batalhas diretas (Modo A) <span class="sub">· 1 imóvel = 2 conjuntos, 1 por pessoa</span></h2>
+  <div class="battles" id="modoA-battles"></div>
+
+  <!-- MODO B -->
+  <div class="mode-banner b">
+    <div class="mode-tag">MODO B</div>
+    <div class="desc">
+      <b>Disputa de anúncios — algoritmo do FB distribui a verba (criados em 08/mai).</b><br>
+      Conjuntos dos imóveis <b>4583 e 37906</b> rodando com 2 anúncios dentro. CPL desigual porque a verba não foi distribuída igualmente — olhe também CTR e CPC pra comparação justa.
+    </div>
+  </div>
+
+  <h2 class="section">Batalhas diretas (Modo B) <span class="sub">· V1 vs V2 dentro do mesmo conjunto</span></h2>
+  <div class="battles cols-2" id="modoB-battles"></div>
+
+  <h2 class="section">Conjuntos sem batalha</h2>
+  <div class="solo-card" id="solo-card"></div>
+
+  <h2 class="section">Mapa visual</h2>
+  <div class="charts">
+    <div class="chart-card">
+      <h3>CTR × CPL — todos os criativos <span class="sub">· canto superior esquerdo = ideal</span></h3>
+      <div class="chart-wrap"><canvas id="scatter"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>CPL por criativo <span class="sub">· ordenado do menor pro maior</span></h3>
+      <div class="chart-wrap"><canvas id="cplChart"></canvas></div>
+    </div>
+  </div>
+
+  <footer>
+    Dashboard atualizado em 23 mai 2026 · Dados acumulados desde criação dos criativos · Mande novos prints quando quiser nova rodada.
+  </footer>
+
+</div>
+</div>
+
+<script>
+const modoA = [
+  { id: '29787', name: 'KAUE',    valor: 166.53, leads: 9, cliques: 518, cpc: 0.32, ctr: 31.98, cpm: 97.43 },
+  { id: '29787', name: 'CECI',    valor: 163.37, leads: 1, cliques: 415, cpc: 0.39, ctr: 5.87,  cpm: 22.15 },
+  { id: '40736', name: 'MAJORY',  valor: 163.49, leads: 3, cliques: 460, cpc: 0.36, ctr: 13.46, cpm: 44.89 },
+  { id: '40736', name: 'CECI',    valor: 164.11, leads: 3, cliques: 237, cpc: 0.69, ctr: 3.62,  cpm: 24.92 },
+  { id: '41654', name: 'TATI',    valor: 167.77, leads: 4, cliques: 475, cpc: 0.35, ctr: 16.57, cpm: 51.86 },
+  { id: '41654', name: 'CECILIA', valor: 167.71, leads: 6, cliques: 467, cpc: 0.36, ctr: 13.23, cpm: 43.14 },
+];
+
+const modoB = [
+  { id: '4583',  name: 'V1 CECILIA',  valor: 252.19, leads: 7, cliques: 967, cpc: 0.26, ctr: 9.83,  cpm: 24.29 },
+  { id: '4583',  name: 'V2 KARINA',   valor: 99.19,  leads: 1, cliques: 344, cpc: 0.29, ctr: 20.40, cpm: 102.24 },
+  { id: '37906', name: 'V1 CECILIA',  valor: 165.23, leads: 2, cliques: 402, cpc: 0.41, ctr: 7.93,  cpm: 36.15 },
+  { id: '37906', name: 'V2 FERNANDO', valor: 184.92, leads: 5, cliques: 649, cpc: 0.28, ctr: 17.25, cpm: 44.65 },
+];
+
+function deriveMetrics(arr) {
+  arr.forEach(c => {
+    c.label = `[${c.id}] ${c.name}`;
+    c.cpl = c.leads > 0 ? c.valor / c.leads : null;
+    c.convRate = c.cliques > 0 ? (c.leads / c.cliques) * 100 : 0;
+  });
+}
+
+function renderModoATable() {
+  // sort by CPL ascending (null = end)
+  const sorted = [...modoA].sort((a, b) => {
+    if (a.cpl === null && b.cpl === null) return 0;
+    if (a.cpl === null) return 1;
+    if (b.cpl === null) return -1;
+    return a.cpl - b.cpl;
+  });
+  const tbody = document.getElementById('modoA-tbody');
+  tbody.innerHTML = '';
+  const validCpls = sorted.filter(c => c.cpl !== null).map(c => c.cpl);
+  const bestCpl = Math.min(...validCpls), worstCpl = Math.max(...validCpls);
+  const bestCtr = Math.max(...sorted.map(c => c.ctr)), worstCtr = Math.min(...sorted.map(c => c.ctr));
+
+  sorted.forEach((c) => {
+    const cplFmt = c.cpl === null
+      ? '<span style="color:var(--lose); font-weight:600">— (0 leads)</span>'
+      : (c.cpl === bestCpl ? `<span class="num-best">R$ ${c.cpl.toFixed(2)}</span>` :
+         c.cpl === worstCpl ? `<span class="num-worst">R$ ${c.cpl.toFixed(2)}</span>` :
+         `R$ ${c.cpl.toFixed(2)}`);
+    const ctrFmt = c.ctr === bestCtr ? `<span class="num-best">${c.ctr.toFixed(2)}%</span>` :
+                   c.ctr === worstCtr ? `<span class="num-worst">${c.ctr.toFixed(2)}%</span>` :
+                   `${c.ctr.toFixed(2)}%`;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="creative-name">${c.label}</div><div class="creative-id">imóvel #${c.id} · ${c.name}</div></td>
+      <td>R$ ${c.valor.toFixed(2)}</td>
+      <td>${c.leads}</td>
+      <td>${cplFmt}</td>
+      <td>${ctrFmt}</td>
+      <td>R$ ${c.cpc.toFixed(2)}</td>
+      <td>${c.cliques}</td>
+      <td>${c.leads === 0 ? '<span style="color:var(--lose)">0%</span>' : c.convRate.toFixed(2) + '%'}</td>
+      <td>R$ ${c.cpm.toFixed(2)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function pickWinnerByCpl(variants) {
+  // returns sorted: best CPL first (null = worst)
+  return [...variants].sort((a, b) => {
+    if (a.cpl === null && b.cpl === null) return 0;
+    if (a.cpl === null) return 1;
+    if (b.cpl === null) return -1;
+    return a.cpl - b.cpl;
+  });
+}
+
+function renderModoABattles() {
+  const groups = {};
+  modoA.forEach(c => { (groups[c.id] = groups[c.id] || []).push(c); });
+  const container = document.getElementById('modoA-battles');
+  container.innerHTML = '';
+  Object.keys(groups).forEach(id => {
+    const variants = pickWinnerByCpl(groups[id]);
+    if (variants.length < 2) return;
+    const competitorHtml = variants.map((v, idx) => `
+      <div class="competitor ${idx === 0 && v.cpl !== null ? 'winner' : ''}">
+        <div class="name">${v.name}</div>
+        <div class="micro-stats">
+          <div>CPL<span>${v.cpl === null ? '—' : 'R$ ' + v.cpl.toFixed(2)}</span></div>
+          <div>CTR<span>${v.ctr.toFixed(2)}%</span></div>
+          <div>Leads<span>${v.leads}</span></div>
+          <div>Investido<span>R$ ${v.valor.toFixed(2)}</span></div>
+          <div>CPC<span>R$ ${v.cpc.toFixed(2)}</span></div>
+          <div>Conv.<span>${v.convRate.toFixed(2)}%</span></div>
+        </div>
+      </div>
+    `).join('<div class="vs-divider">VS</div>');
+
+    container.innerHTML += `
+      <div class="battle">
+        <div class="battle-head">
+          <div class="battle-property">Imóvel <span class="pid">#${id}</span></div>
+          <div class="battle-tag">conjuntos separados</div>
+        </div>
+        <div class="vs-row">${competitorHtml}</div>
+      </div>
+    `;
+  });
+}
+
+function renderModoBBattles() {
+  const groups = {};
+  modoB.forEach(c => { (groups[c.id] = groups[c.id] || []).push(c); });
+  const container = document.getElementById('modoB-battles');
+  container.innerHTML = '';
+  Object.keys(groups).forEach(id => {
+    const variants = pickWinnerByCpl(groups[id]);
+    if (variants.length < 2) return;
+    const totalSpend = variants.reduce((s, c) => s + c.valor, 0);
+    variants.forEach(c => c.spendShare = totalSpend > 0 ? (c.valor / totalSpend) * 100 : 0);
+
+    const competitorHtml = variants.map((v, idx) => `
+      <div class="competitor ${idx === 0 && v.cpl !== null ? 'winner' : ''}">
+        <div class="name">${v.name}</div>
+        <div class="micro-stats">
+          <div>CPL<span>${v.cpl === null ? '—' : 'R$ ' + v.cpl.toFixed(2)}</span></div>
+          <div>CTR<span>${v.ctr.toFixed(2)}%</span></div>
+          <div>CPC<span>R$ ${v.cpc.toFixed(2)}</span></div>
+          <div>Leads / cliques<span>${v.leads} / ${v.cliques}</span></div>
+        </div>
+        <div class="alloc-bar"><span style="width:${v.spendShare}%"></span></div>
+        <div class="alloc-label">Algoritmo deu <b style="color:var(--text)">${v.spendShare.toFixed(0)}%</b> da verba · R$ ${v.valor.toFixed(2)}</div>
+      </div>
+    `).join('<div class="vs-divider">VS</div>');
+
+    container.innerHTML += `
+      <div class="battle">
+        <div class="battle-head">
+          <div class="battle-property">Imóvel <span class="pid">#${id}</span></div>
+          <div class="battle-tag">1 conjunto · ${variants.length} anúncios</div>
+        </div>
+        <div class="vs-row">${competitorHtml}</div>
+      </div>
+    `;
+  });
+}
+
+function renderSolo() {
+  const c = { id: '24178', name: 'V1', valor: 101.36, leads: 2, cliques: 142, cpc: 0.71, ctr: 3.07, cpm: 21.91 };
+  c.cpl = c.valor / c.leads;
+  c.convRate = (c.leads / c.cliques) * 100;
+  const card = document.getElementById('solo-card');
+  card.innerHTML = `
+    <h3>Imóvel <span style="color:var(--text-dim); font-weight:400">#24178 · V1</span> — <span class="pill lose">PAUSADO</span></h3>
+    <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:14px; font-size:12px; color:var(--text-dim); margin-top:12px">
+      <div>Investido<div style="color:var(--text); font-weight:700; font-size:16px; margin-top:3px">R$ ${c.valor.toFixed(2)}</div></div>
+      <div>Leads<div style="color:var(--text); font-weight:700; font-size:16px; margin-top:3px">${c.leads}</div></div>
+      <div>CPL<div style="color:var(--text); font-weight:700; font-size:16px; margin-top:3px">R$ ${c.cpl.toFixed(2)}</div></div>
+      <div>Cliques<div style="color:var(--text); font-weight:700; font-size:16px; margin-top:3px">${c.cliques}</div></div>
+      <div>CTR<div style="color:var(--lose); font-weight:700; font-size:16px; margin-top:3px">${c.ctr.toFixed(2)}%</div></div>
+      <div>CPC<div style="color:var(--lose); font-weight:700; font-size:16px; margin-top:3px">R$ ${c.cpc.toFixed(2)}</div></div>
+      <div>Conv.<div style="color:var(--win); font-weight:700; font-size:16px; margin-top:3px">${c.convRate.toFixed(2)}%</div></div>
+    </div>
+    <p style="color:var(--text-dim); font-size:12.5px; margin:14px 0 0; padding-top:12px; border-top:1px solid var(--border); line-height:1.55">
+      Conjunto atualmente desligado. Histórico: 2 leads em R$ 101,36 (CPL R$ 50,68). CTR baixo de 3,07% — o criativo não atraía — mas a conv. clique→lead de 1,41% indica que a página de destino convertia bem. Considerar testar uma variante [V2] mantendo o mesmo destino.
+    </p>
+  `;
+}
+
+function renderCharts() {
+  Chart.defaults.color = '#95a3bd';
+  Chart.defaults.borderColor = '#243355';
+
+  const all = [...modoA, ...modoB].filter(c => c.cpl !== null);
+  const scatterData = all.map(c => ({ x: c.cpl, y: c.ctr, label: c.label }));
+
+  // color based on CPL: lower = green, higher = red
+  const cpls = all.map(c => c.cpl);
+  const cplMin = Math.min(...cpls), cplMax = Math.max(...cpls);
+  const colorFor = (cpl) => {
+    const norm = (cpl - cplMin) / (cplMax - cplMin || 1);
+    if (norm < 0.33) return '#00d68f';
+    if (norm < 0.66) return '#4f86ff';
+    return '#ff4d6d';
+  };
+
+  new Chart(document.getElementById('scatter').getContext('2d'), {
+    type: 'scatter',
+    data: { datasets: [{ label: 'Criativos', data: scatterData,
+      backgroundColor: all.map(c => colorFor(c.cpl)),
+      borderColor: '#fff', borderWidth: 1, pointRadius: 9, pointHoverRadius: 12 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: { title: { display: true, text: 'CPL — Custo por Lead (R$)', color: '#e6ecf5', font: { weight: 600 } }, grid: { color: 'rgba(255,255,255,.05)' } },
+        y: { title: { display: true, text: 'CTR (%) — quanto maior, melhor', color: '#e6ecf5', font: { weight: 600 } }, grid: { color: 'rgba(255,255,255,.05)' } }
+      },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => [`${ctx.raw.label}`, `CPL: R$ ${ctx.raw.x.toFixed(2)}`, `CTR: ${ctx.raw.y.toFixed(2)}%`] } } }
+    }
+  });
+
+  // CPL by creative bar chart
+  const sortedByCpl = [...all].sort((a, b) => a.cpl - b.cpl);
+  new Chart(document.getElementById('cplChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: sortedByCpl.map(c => c.label),
+      datasets: [{ label: 'CPL (R$)', data: sortedByCpl.map(c => c.cpl),
+        backgroundColor: sortedByCpl.map(c => colorFor(c.cpl)),
+        borderRadius: 6 }] },
+    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      scales: { x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { callback: (v) => 'R$ ' + v } }, y: { grid: { display: false }, ticks: { font: { size: 11 } } } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `CPL: R$ ${ctx.raw.toFixed(2)}` } } } }
+  });
+}
+
+deriveMetrics(modoA);
+deriveMetrics(modoB);
+renderModoATable();
+renderModoABattles();
+renderModoBBattles();
+renderSolo();
+renderCharts();
+</script>
+</body>
+</html>
